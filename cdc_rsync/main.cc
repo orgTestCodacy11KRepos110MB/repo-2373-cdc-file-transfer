@@ -90,7 +90,24 @@ ReturnCode TagToMessage(cdc_ft::Tag tag,
 
 }  // namespace
 
+namespace cdc_ft {
+
+bool Test() {
+  /*Socket::Initialize().IgnoreError();
+  SocketFinalizer socket_finalizer;
+  ClientSocket socket;
+
+  socket.Connect(55971);
+
+  return true;*/
+  return false;
+}
+
+}  // namespace cdc_ft
+
 int wmain(int argc, wchar_t* argv[]) {
+  if (cdc_ft::Test()) return 0;
+
   // Convert args from wide to UTF8 strings.
   std::vector<std::string> utf8_str_args;
   utf8_str_args.reserve(argc);

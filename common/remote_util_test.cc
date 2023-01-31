@@ -66,11 +66,11 @@ TEST_F(RemoteUtilTest, BuildProcessStartInfoForSsh) {
 
 TEST_F(RemoteUtilTest, BuildProcessStartInfoForSshPortForward) {
   ProcessStartInfo si = util_.BuildProcessStartInfoForSshPortForward(
-      kLocalPort, kRemotePort, kRegular, ArchType::kLinux_x86_64);
+      kLocalPort, kRemotePort, kRegular);
   ExpectContains(si.command, {"ssh", kUserHostArg, kPortForwardingArg});
 
-  si = util_.BuildProcessStartInfoForSshPortForward(
-      kLocalPort, kRemotePort, kReverse, ArchType::kLinux_x86_64);
+  si = util_.BuildProcessStartInfoForSshPortForward(kLocalPort, kRemotePort,
+                                                    kReverse);
   ExpectContains(si.command, {"ssh", kUserHostArg, kReversePortForwardingArg});
 }
 

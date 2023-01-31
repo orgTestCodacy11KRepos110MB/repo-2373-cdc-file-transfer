@@ -111,8 +111,7 @@ class RemoteUtil {
   // up reverse port forwarding.
   ProcessStartInfo BuildProcessStartInfoForSshPortForward(int local_port,
                                                           int remote_port,
-                                                          bool reverse,
-                                                          ArchType arch_type);
+                                                          bool reverse);
 
   // Builds an SSH command that executes |remote_command| on the remote device,
   // using port forwarding with given |local_port| and |remote_port|. If

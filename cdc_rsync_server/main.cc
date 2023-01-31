@@ -60,16 +60,21 @@ ServerExitCode GetExitCode(const absl::Status& status) {
 }  // namespace cdc_ft
 
 int main(int argc, const char** argv) {
-  if (argc < 2) {
-    printf("Usage: cdc_rsync_server <port> cdc_rsync_server <size> <time> \n");
+  if (argc < 3) {
+    printf(
+        "Usage: cdc_rsync_server <first_port> <last_port> cdc_rsync_server "
+        "<size> <time> \n");
     printf("       where <size> and <time> are the file size and modified\n");
     printf("       timestamp (Unix epoch) of the corresponding component.\n");
     return cdc_ft::kServerExitCodeGenericStartup;
   }
 
-  int port = atoi(argv[1]);
-  if (port == 0) {
-    SendErrorMessage(absl::StrFormat("Invalid port '%s'", argv[1]).c_str());
+  int first_port = atoi(argv[1]);
+  int last_port = atoi(argv[2]);
+  if (first_port == 0 || last_port == 0) {
+    SendErrorMessage(
+        absl::StrFormat("Invalid port range [%s, %s]'", argv[1], argv[2])
+            .c_str());
     return cdc_ft::kServerExitCodeGenericStartup;
   }
 
@@ -77,16 +82,16 @@ int main(int argc, const char** argv) {
   // (filename, filesize, modified_time). This is used check whether the
   // components are up-to-date.
   std::vector<cdc_ft::GameletComponent> components =
-      cdc_ft::GameletComponent::FromCommandLineArgs(argc - 2, argv + 2);
+      cdc_ft::GameletComponent::FromCommandLineArgs(argc - 3, argv + 3);
 
   cdc_ft::Log::Initialize(
       std::make_unique<cdc_ft::ConsoleLog>(cdc_ft::LogLevel::kWarning));
   cdc_ft::CdcRsyncServer server;
-  if (!server.CheckComponents(components)) {
+  /*if (!server.CheckComponents(components)) {
     return cdc_ft::kServerExitCodeOutOfDate;
-  }
+  }*/
 
-  absl::Status status = server.Run(port);
+  absl::Status status = server.Run(first_port, last_port);
   if (status.ok()) {
     return 0;
   }

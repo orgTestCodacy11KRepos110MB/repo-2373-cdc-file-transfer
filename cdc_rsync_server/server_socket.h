@@ -18,6 +18,7 @@
 #define CDC_RSYNC_SERVER_SERVER_SOCKET_H_
 
 #include "absl/status/status.h"
+#include "absl/status/statusor.h"
 #include "cdc_rsync/base/socket.h"
 
 namespace cdc_ft {
@@ -27,8 +28,16 @@ class ServerSocket : public Socket {
   ServerSocket();
   ~ServerSocket();
 
-  // Starts listening for connections on |port|.
-  absl::Status StartListening(int port);
+  // Creates a TCP socket and binds to |port|.
+  absl::Status Bind(int port);
+
+  // Starts listening for connections on the first available port in the range
+  // [|first_port|, |first_port|]. Returns the port.
+  // Adds tag Tag::kAddressInUse if all addresses are in use.
+  absl::StatusOr<int> BindToAnyPort(int first_port, int last_port);
+
+  // Starts listening for connections. Must be in bound state.
+  absl::Status StartListening();
 
   // Stops listening for connections. No-op if already stopped/never started.
   void StopListening();

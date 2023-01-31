@@ -113,12 +113,12 @@ ServerSocket::~ServerSocket() {
   StopListening();
 }
 
-absl::Status ServerSocket::StartListening(int port) {
+absl::Status ServerSocket::Bind(int port) {
   if (socket_info_->listen_sock != kInvalidSocket) {
-    return MakeStatus("Already listening");
+    return MakeStatus("Socket is already bound");
   }
 
-  LOG_DEBUG("Open socket");
+  LOG_DEBUG("Open listen socket");
   socket_info_->listen_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (socket_info_->listen_sock == kInvalidSocket) {
     return MakeStatus("Creating listen socket failed: %s", GetLastErrorStr());
@@ -136,7 +136,7 @@ absl::Status ServerSocket::StartListening(int port) {
     LOG_DEBUG("Enabling address reusal failed");
   }
 
-  LOG_DEBUG("Bind socket");
+  LOG_DEBUG("Bind socket to port %i", port);
   sockaddr_in serv_addr;
   memset(&serv_addr, 0, sizeof(serv_addr));
   serv_addr.sin_family = AF_INET;
@@ -159,8 +159,43 @@ absl::Status ServerSocket::StartListening(int port) {
     return status;
   }
 
+  return absl::OkStatus();
+}
+
+absl::StatusOr<int> ServerSocket::BindToAnyPort(int first_port, int last_port) {
+  if (socket_info_->listen_sock != kInvalidSocket) {
+    return MakeStatus("Socket is already bound");
+  }
+
+  absl::Status error_status;
+  for (int port = first_port; port <= last_port; ++port) {
+    absl::Status status = Bind(port);
+    if (status.ok()) {
+      return port;
+    }
+    if (!HasTag(status, Tag::kAddressInUse)) {
+      error_status = status;
+    }
+  }
+
+  // All bind attempts failed and there was an error that's not address-in-use.
+  if (!error_status.ok()) {
+    return error_status;
+  }
+
+  // Otherwise, all ports are in use.
+  return SetTag(MakeStatus("All ports in the range [%i, %i] are in use",
+                           first_port, last_port),
+                Tag::kAddressInUse);
+}
+
+absl::Status ServerSocket::StartListening() {
+  if (socket_info_->listen_sock == kInvalidSocket) {
+    return MakeStatus("Socket is not bound");
+  }
+
   LOG_DEBUG("Listen");
-  result = listen(socket_info_->listen_sock, 1);
+  int result = listen(socket_info_->listen_sock, 1);
   if (result == kSocketError) {
     int err = GetLastError();
     Close(&socket_info_->listen_sock);

@@ -198,13 +198,15 @@ ProcessStartInfo RemoteUtil::BuildProcessStartInfoForSsh(
 }
 
 ProcessStartInfo RemoteUtil::BuildProcessStartInfoForSshPortForward(
-    int local_port, int remote_port, bool reverse, ArchType arch_type) {
+    int local_port, int remote_port, bool reverse) {
   // Usually, one would pass in -N here, but this makes the connection terribly
   // slow! As a workaround, don't use -N (will open a shell), but simply eat the
   // output.
+  // Note: Don't use the Windows args now. It implies -T instead of -tt, which
+  // will make the process exit immediately.
   ProcessStartInfo si = BuildProcessStartInfoForSshInternal(
       GetPortForwardingArg(local_port, remote_port, reverse) + "-n ", "",
-      arch_type);
+      ArchType::kLinux_x86_64);
   si.stdout_handler = [](const void*, size_t) { return absl::OkStatus(); };
   return si;
 }
